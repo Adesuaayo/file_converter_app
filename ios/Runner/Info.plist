@@ -1,0 +1,219 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+<plist version="1.0">
+<!--
+  ──────────────────────────────────────────────────────────────────────────────
+  Info.plist — File Converter Pro (iOS)
+  ──────────────────────────────────────────────────────────────────────────────
+
+  This file configures:
+  - App metadata (bundle ID, display name, version)
+  - Privacy permission descriptions (REQUIRED by App Store)
+  - AdMob configuration
+  - File type associations (UTI declarations)
+  - Background processing capabilities
+  - Transport security settings
+  ──────────────────────────────────────────────────────────────────────────────
+-->
+<dict>
+    <!-- ─── App Metadata ──────────────────────────────────────────────── -->
+    <key>CFBundleName</key>
+    <string>File Converter Pro</string>
+
+    <key>CFBundleDisplayName</key>
+    <string>File Converter</string>
+
+    <key>CFBundleIdentifier</key>
+    <string>$(PRODUCT_BUNDLE_IDENTIFIER)</string>
+
+    <key>CFBundleVersion</key>
+    <string>$(FLUTTER_BUILD_NUMBER)</string>
+
+    <key>CFBundleShortVersionString</key>
+    <string>$(FLUTTER_BUILD_NAME)</string>
+
+    <key>CFBundlePackageType</key>
+    <string>APPL</string>
+
+    <key>CFBundleExecutable</key>
+    <string>$(EXECUTABLE_NAME)</string>
+
+    <key>CFBundleDevelopmentRegion</key>
+    <string>en</string>
+
+    <key>CFBundleInfoDictionaryVersion</key>
+    <string>6.0</string>
+
+    <key>LSRequiresIPhoneOS</key>
+    <true/>
+
+    <!-- ─── Flutter Engine ────────────────────────────────────────────── -->
+    <key>io.flutter.embedded_views_preview</key>
+    <true/>
+
+    <!-- ─── Supported Orientations ────────────────────────────────────── -->
+    <key>UISupportedInterfaceOrientations</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+    </array>
+    <key>UISupportedInterfaceOrientations~ipad</key>
+    <array>
+        <string>UIInterfaceOrientationPortrait</string>
+        <string>UIInterfaceOrientationPortraitUpsideDown</string>
+        <string>UIInterfaceOrientationLandscapeLeft</string>
+        <string>UIInterfaceOrientationLandscapeRight</string>
+    </array>
+
+    <!-- ─── Status Bar ────────────────────────────────────────────────── -->
+    <key>UIViewControllerBasedStatusBarAppearance</key>
+    <true/>
+    <key>UIStatusBarHidden</key>
+    <false/>
+
+    <!-- ─── Launch Storyboard ─────────────────────────────────────────── -->
+    <key>UILaunchStoryboardName</key>
+    <string>LaunchScreen</string>
+
+    <!-- ─── Privacy Permissions ───────────────────────────────────────── -->
+    <!--
+        App Store REQUIRES usage description strings for all permissions.
+        These are shown to the user in the system permission dialog.
+        Make them clear and specific about WHY the app needs access.
+    -->
+
+    <!-- Photo Library — needed for image-to-PDF conversion -->
+    <key>NSPhotoLibraryUsageDescription</key>
+    <string>File Converter needs access to your photo library to select images for PDF conversion. Your photos are processed locally on your device and never uploaded to any server.</string>
+
+    <!-- Photo Library Add — needed to save converted images -->
+    <key>NSPhotoLibraryAddUsageDescription</key>
+    <string>File Converter needs permission to save converted images to your photo library.</string>
+
+    <!-- Document Picker — needed for file selection -->
+    <key>LSSupportsOpeningDocumentsInPlace</key>
+    <true/>
+
+    <key>UIFileSharingEnabled</key>
+    <true/>
+
+    <!-- iOS 14+ App Tracking Transparency — required for personalized ads -->
+    <key>NSUserTrackingUsageDescription</key>
+    <string>This identifier will be used to deliver personalized ads to you. You can choose to decline and still use the app with non-personalized ads.</string>
+
+    <!-- ─── Google AdMob ──────────────────────────────────────────────── -->
+    <!--
+        IMPORTANT: Replace with your actual AdMob App ID before release.
+        Test ID below is from Google's sample app for development only.
+    -->
+    <key>GADApplicationIdentifier</key>
+    <string>ca-app-pub-3940256099942544~1458002511</string>
+
+    <!-- iOS 14+ SKAdNetwork for ad attribution -->
+    <key>SKAdNetworkItems</key>
+    <array>
+        <!-- Google's SKAdNetwork ID -->
+        <dict>
+            <key>SKAdNetworkIdentifier</key>
+            <string>cstr6suwn9.skadnetwork</string>
+        </dict>
+        <!-- Add additional ad network IDs as needed -->
+    </array>
+
+    <!-- ─── App Transport Security ───────────────────────────────────── -->
+    <!--
+        Allow HTTP for ad networks that haven't migrated to HTTPS.
+        In production, prefer restricting this to specific domains.
+    -->
+    <key>NSAppTransportSecurity</key>
+    <dict>
+        <key>NSAllowsArbitraryLoads</key>
+        <true/>
+        <key>NSAllowsArbitraryLoadsForMedia</key>
+        <true/>
+        <key>NSAllowsArbitraryLoadsInWebContent</key>
+        <true/>
+    </dict>
+
+    <!-- ─── Document Types — File Association ─────────────────────────── -->
+    <!--
+        Registers the app as a handler for these file types.
+        Allows files to be opened directly in the app from the Files app,
+        email attachments, or other apps via "Open In" / Share Sheet.
+    -->
+    <key>CFBundleDocumentTypes</key>
+    <array>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>PDF Document</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>com.adobe.pdf</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Word Document</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>org.openxmlformats.wordprocessingml.document</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Plain Text</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.plain-text</string>
+            </array>
+        </dict>
+        <dict>
+            <key>CFBundleTypeName</key>
+            <string>Image</string>
+            <key>LSHandlerRank</key>
+            <string>Alternate</string>
+            <key>LSItemContentTypes</key>
+            <array>
+                <string>public.image</string>
+            </array>
+        </dict>
+    </array>
+
+    <!-- ─── Imported UTIs ─────────────────────────────────────────────── -->
+    <key>UTImportedTypeDeclarations</key>
+    <array>
+        <dict>
+            <key>UTTypeIdentifier</key>
+            <string>org.openxmlformats.wordprocessingml.document</string>
+            <key>UTTypeDescription</key>
+            <string>Word Document</string>
+            <key>UTTypeConformsTo</key>
+            <array>
+                <string>public.data</string>
+                <string>public.content</string>
+            </array>
+            <key>UTTypeTagSpecification</key>
+            <dict>
+                <key>public.filename-extension</key>
+                <array>
+                    <string>docx</string>
+                </array>
+                <key>public.mime-type</key>
+                <string>application/vnd.openxmlformats-officedocument.wordprocessingml.document</string>
+            </dict>
+        </dict>
+    </array>
+
+    <!-- ─── Background Modes ──────────────────────────────────────────── -->
+    <!-- Enable background processing for large file conversions -->
+    <key>UIBackgroundModes</key>
+    <array>
+        <string>processing</string>
+    </array>
+</dict>
+</plist>

@@ -1,0 +1,94 @@
+# ──────────────────────────────────────────────────────────────────────────────
+# .gitignore — File Converter Pro
+# ──────────────────────────────────────────────────────────────────────────────
+
+# ─── Dart / Flutter ───────────────────────────────────────────────────────────
+*.dart_tool/
+.packages
+.pub/
+build/
+.flutter-plugins
+.flutter-plugins-dependencies
+.dart_tool/
+
+# Generated files (keep .g.dart since we pre-generate TypeAdapters without build_runner)
+# *.g.dart
+*.freezed.dart
+*.mocks.dart
+*.config.dart
+
+# ─── Android ──────────────────────────────────────────────────────────────────
+# Keep gradle-wrapper.jar, gradlew, gradlew.bat — required for CI builds
+**/android/.gradle
+**/android/captures/
+**/android/local.properties
+**/android/**/GeneratedPluginRegistrant.java
+**/android/key.properties
+*.jks
+*.keystore
+release-keystore.jks
+
+# ─── iOS ──────────────────────────────────────────────────────────────────────
+**/ios/**/*.mode1v3
+**/ios/**/*.mode2v3
+**/ios/**/*.moved-aside
+**/ios/**/*.pbxuser
+**/ios/**/*.perspectivev3
+**/ios/**/*sync/
+**/ios/**/.sconsign.dblite
+**/ios/**/.tags*
+**/ios/**/.vagrant/
+**/ios/**/DerivedData/
+**/ios/**/Icon?
+**/ios/**/Pods/
+**/ios/**/.symlinks/
+**/ios/**/profile
+**/ios/**/xcuserdata
+**/ios/.generated/
+**/ios/Flutter/.last_build_id
+**/ios/Flutter/App.framework
+**/ios/Flutter/Flutter.framework
+**/ios/Flutter/Flutter.podspec
+**/ios/Flutter/Generated.xcconfig
+**/ios/Flutter/ephemeral
+**/ios/Flutter/app.flx
+**/ios/Flutter/app.zip
+**/ios/Flutter/flutter_assets/
+**/ios/Flutter/flutter_export_environment.sh
+**/ios/ServiceDefinitions.json
+**/ios/Runner/GeneratedPluginRegistrant.*
+
+# ─── IDE ──────────────────────────────────────────────────────────────────────
+*.iml
+*.ipr
+*.iws
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# ─── macOS ────────────────────────────────────────────────────────────────────
+.DS_Store
+*.DS_Store
+.AppleDouble
+.LSOverride
+
+# ─── Windows ──────────────────────────────────────────────────────────────────
+Thumbs.db
+ehthumbs.db
+
+# ─── Secrets & Environment ───────────────────────────────────────────────────
+.env
+.env.*
+*.env
+secrets/
+credentials/
+
+# ─── Coverage ─────────────────────────────────────────────────────────────────
+coverage/
+*.lcov
+
+# ─── Misc ─────────────────────────────────────────────────────────────────────
+doc/api/
+.pub-cache/

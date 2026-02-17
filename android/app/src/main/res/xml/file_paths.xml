@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Internal app storage — primary location for converted files -->
+    <files-path
+        name="converted_files"
+        path="converted/" />
+
+    <!-- Cache directory — for temporary conversion intermediates -->
+    <cache-path
+        name="cache_files"
+        path="." />
+
+    <!-- External files directory — for user-accessible output -->
+    <external-files-path
+        name="external_converted"
+        path="converted/" />
+
+    <!-- External cache — for large temporary files during batch conversion -->
+    <external-cache-path
+        name="external_cache"
+        path="." />
+</paths>
