@@ -1,5 +1,6 @@
 import 'dart:io';
 import 'dart:typed_data';
+import 'dart:convert';
 import 'package:pdf/pdf.dart';
 import 'package:pdf/widgets.dart' as pw;
 import 'package:archive/archive.dart';
@@ -126,7 +127,8 @@ class FileConversionDatasource {
   // ─── PDF → TXT ────────────────────────────────────────────────────────
 
   /// Converts a PDF file to plain text.
-  /// Extracts text from raw PDF content streams (BT/ET blocks with Tj/TJ operators).
+  /// Decompresses FlateDecode content streams before extracting text,
+  /// which handles the vast majority of modern PDFs.
   Future<String> convertPdfToTxt(
     String inputPath,
     ConversionSettings settings,
@@ -136,37 +138,26 @@ class FileConversionDatasource {
       final bytes = await inputFile.readAsBytes();
       final content = String.fromCharCodes(bytes);
 
-      // Extract text from PDF content streams
       final textBuffer = StringBuffer();
-      final btEtPattern = RegExp(r'BT\s(.*?)\sET', dotAll: true);
-      final tjPattern = RegExp(r'\((.*?)\)\s*Tj', dotAll: true);
-      final tjArrayPattern = RegExp(r'\[(.*?)\]\s*TJ', dotAll: true);
-      final parenthesesPattern = RegExp(r'\((.*?)\)');
 
-      for (final btMatch in btEtPattern.allMatches(content)) {
-        final block = btMatch.group(1) ?? '';
+      // Strategy 1: Decompress FlateDecode streams and extract text
+      final decompressedText = _extractTextFromCompressedStreams(bytes);
+      if (decompressedText.isNotEmpty) {
+        textBuffer.write(decompressedText);
+      }
 
-        // Extract text from Tj operators
-        for (final tjMatch in tjPattern.allMatches(block)) {
-          final text = tjMatch.group(1) ?? '';
-          textBuffer.write(_decodePdfText(text));
+      // Strategy 2: Also try raw uncompressed streams
+      if (textBuffer.toString().trim().isEmpty) {
+        final rawText = _extractTextFromRawStreams(content);
+        if (rawText.isNotEmpty) {
+          textBuffer.write(rawText);
         }
-
-        // Extract text from TJ arrays
-        for (final tjArr in tjArrayPattern.allMatches(block)) {
-          final arrayContent = tjArr.group(1) ?? '';
-          for (final pMatch in parenthesesPattern.allMatches(arrayContent)) {
-            textBuffer.write(_decodePdfText(pMatch.group(1) ?? ''));
-          }
-        }
-
-        textBuffer.writeln();
       }
 
       final text = textBuffer.toString().trim();
       if (text.isEmpty) {
         throw const ConversionException(
-          'No extractable text found in PDF. The PDF may contain only images or use embedded fonts.',
+          'No extractable text found in PDF. The PDF may contain only images or scanned content.',
         );
       }
 
@@ -183,6 +174,102 @@ class FileConversionDatasource {
     } catch (e) {
       throw ConversionException('PDF to Text conversion failed: $e');
     }
+  }
+
+  /// Extract text from FlateDecode compressed content streams.
+  /// Most modern PDFs use zlib compression on their content streams.
+  String _extractTextFromCompressedStreams(Uint8List pdfBytes) {
+    final textBuffer = StringBuffer();
+    final content = String.fromCharCodes(pdfBytes);
+
+    // Find all stream sections
+    final streamPattern = RegExp(r'stream\r?\n', caseSensitive: true);
+    final endStreamPattern = RegExp(r'\r?\nendstream', caseSensitive: true);
+
+    // Check if the PDF uses FlateDecode
+    final usesFlate = content.contains('FlateDecode');
+
+    final streamStarts = streamPattern.allMatches(content).toList();
+    final streamEnds = endStreamPattern.allMatches(content).toList();
+
+    for (int i = 0; i < streamStarts.length && i < streamEnds.length; i++) {
+      final startOffset = streamStarts[i].end;
+      final endOffset = streamEnds[i].start;
+
+      if (endOffset <= startOffset || endOffset > pdfBytes.length) continue;
+
+      try {
+        final streamBytes = pdfBytes.sublist(startOffset, endOffset);
+
+        String streamContent;
+        if (usesFlate) {
+          // Try to decompress with zlib
+          try {
+            final decompressed = zlib.decode(streamBytes);
+            streamContent = String.fromCharCodes(decompressed);
+          } catch (_) {
+            // Not a compressed stream or corrupted — try as raw
+            streamContent = String.fromCharCodes(streamBytes);
+          }
+        } else {
+          streamContent = String.fromCharCodes(streamBytes);
+        }
+
+        // Extract text from the decompressed content
+        final extractedText = _extractTextFromContentStream(streamContent);
+        if (extractedText.isNotEmpty) {
+          textBuffer.write(extractedText);
+          textBuffer.writeln();
+        }
+      } catch (_) {
+        // Skip streams that fail to process
+        continue;
+      }
+    }
+
+    return textBuffer.toString();
+  }
+
+  /// Extract text from raw (uncompressed) PDF content streams.
+  String _extractTextFromRawStreams(String content) {
+    return _extractTextFromContentStream(content);
+  }
+
+  /// Extract text from a PDF content stream using BT/ET blocks and text operators.
+  String _extractTextFromContentStream(String content) {
+    final textBuffer = StringBuffer();
+    final btEtPattern = RegExp(r'BT\s(.*?)\sET', dotAll: true);
+    final tjPattern = RegExp(r'\((.*?)\)\s*Tj', dotAll: true);
+    final tjArrayPattern = RegExp(r'\[(.*?)\]\s*TJ', dotAll: true);
+    final parenthesesPattern = RegExp(r'\((.*?)\)');
+
+    for (final btMatch in btEtPattern.allMatches(content)) {
+      final block = btMatch.group(1) ?? '';
+
+      // Extract text from Tj operators (single string)
+      for (final tjMatch in tjPattern.allMatches(block)) {
+        final text = tjMatch.group(1) ?? '';
+        textBuffer.write(_decodePdfText(text));
+      }
+
+      // Extract text from TJ arrays (array of strings with kerning)
+      for (final tjArr in tjArrayPattern.allMatches(block)) {
+        final arrayContent = tjArr.group(1) ?? '';
+        for (final pMatch in parenthesesPattern.allMatches(arrayContent)) {
+          textBuffer.write(_decodePdfText(pMatch.group(1) ?? ''));
+        }
+      }
+
+      // Check for Td/TD operators to detect line breaks
+      if (block.contains(RegExp(r'\d+\s+\-?\d+\s+Td', caseSensitive: true)) ||
+          block.contains(RegExp(r"T\*"))) {
+        textBuffer.writeln();
+      } else {
+        textBuffer.write(' ');
+      }
+    }
+
+    return textBuffer.toString();
   }
 
   /// Decodes basic PDF text escape sequences.

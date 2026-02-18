@@ -63,24 +63,30 @@ class MonetizationRepositoryImpl implements MonetizationRepository {
       final bool available = await _inAppPurchase.isAvailable();
       if (!available) {
         return const Left(
-          PurchaseFailure('In-app purchases are not available on this device.'),
+          PurchaseFailure(
+            'In-app purchases are not available on this device. '
+            'Make sure you are signed into Google Play Store.',
+          ),
         );
       }
+
+      // Determine if this is a subscription or one-time purchase
+      final isSubscription = productId == AppConstants.weeklySubscriptionId ||
+          productId == AppConstants.monthlySubscriptionId ||
+          productId == AppConstants.yearlySubscriptionId;
 
       // Query product details
       final Set<String> productIds = {productId};
       final ProductDetailsResponse response =
           await _inAppPurchase.queryProductDetails(productIds);
 
-      if (response.notFoundIDs.isNotEmpty) {
-        return const Left(
-          PurchaseFailure('Product not found. Please try again later.'),
-        );
-      }
-
-      if (response.productDetails.isEmpty) {
-        return const Left(
-          PurchaseFailure('No product details available.'),
+      if (response.notFoundIDs.isNotEmpty || response.productDetails.isEmpty) {
+        return Left(
+          PurchaseFailure(
+            'Subscription product "$productId" not found. '
+            'This product must be configured in Google Play Console before it can be purchased. '
+            'Please ensure the app is published and products are set up.',
+          ),
         );
       }
 
@@ -90,10 +96,17 @@ class MonetizationRepositoryImpl implements MonetizationRepository {
         productDetails: productDetails,
       );
 
-      // For non-consumable (one-time purchase)
-      final bool purchaseInitiated = await _inAppPurchase.buyNonConsumable(
-        purchaseParam: purchaseParam,
-      );
+      bool purchaseInitiated;
+      if (isSubscription) {
+        // Subscriptions use buyNonConsumable (auto-renewing)
+        purchaseInitiated = await _inAppPurchase.buyNonConsumable(
+          purchaseParam: purchaseParam,
+        );
+      } else {
+        purchaseInitiated = await _inAppPurchase.buyNonConsumable(
+          purchaseParam: purchaseParam,
+        );
+      }
 
       if (!purchaseInitiated) {
         return const Left(
@@ -107,7 +120,7 @@ class MonetizationRepositoryImpl implements MonetizationRepository {
         for (final PurchaseDetails purchaseDetails in purchaseDetailsList) {
           if (purchaseDetails.status == PurchaseStatus.purchased ||
               purchaseDetails.status == PurchaseStatus.restored) {
-            // Verify and grant premium
+            // Grant premium
             await _grantPremium(productId);
 
             // Complete the purchase

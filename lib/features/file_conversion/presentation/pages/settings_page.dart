@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_bloc/flutter_bloc.dart';
+import 'package:open_filex/open_filex.dart';
 import '../../../../core/constants/app_constants.dart';
 import '../../../../core/services/file_service.dart';
 import '../../../../core/theme/app_colors.dart';
@@ -9,6 +10,8 @@ import '../../../monetization/presentation/bloc/monetization_state.dart';
 import '../../../monetization/presentation/pages/premium_page.dart';
 import '../bloc/theme_cubit.dart';
 import 'package:get_it/get_it.dart';
+import 'terms_page.dart';
+import 'privacy_page.dart';
 
 /// Settings page with theme toggle, premium upgrade, and storage management.
 class SettingsPage extends StatelessWidget {
@@ -99,7 +102,25 @@ class SettingsPage extends StatelessWidget {
               icon: Icons.folder_rounded,
               title: 'Output Directory',
               subtitle: AppConstants.outputDirectoryName,
-              onTap: () {},
+              trailing: const Icon(Icons.open_in_new_rounded, size: 18),
+              onTap: () async {
+                try {
+                  final dir = await GetIt.instance<FileService>().getOutputDirectory();
+                  final result = await OpenFilex.open(dir.path);
+                  if (result.type != ResultType.done && context.mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Output folder: ${dir.path}')),
+                    );
+                  }
+                } catch (e) {
+                  if (context.mounted) {
+                    final dir = await GetIt.instance<FileService>().getOutputDirectory();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(content: Text('Output folder: ${dir.path}')),
+                    );
+                  }
+                }
+              },
             ),
 
             FutureBuilder<int>(
@@ -131,9 +152,22 @@ class SettingsPage extends StatelessWidget {
 
             _SettingsTile(
               icon: Icons.security_rounded,
-              title: 'Privacy & Security',
-              subtitle: 'All processing is done locally on your device',
-              onTap: () {},
+              title: 'Privacy Policy',
+              subtitle: 'How we handle your data',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const PrivacyPolicyPage()),
+              ),
+            ),
+
+            _SettingsTile(
+              icon: Icons.description_rounded,
+              title: 'Terms of Use',
+              subtitle: 'Service terms and conditions',
+              onTap: () => Navigator.push(
+                context,
+                MaterialPageRoute(builder: (_) => const TermsOfUsePage()),
+              ),
             ),
 
             const SizedBox(height: 40),

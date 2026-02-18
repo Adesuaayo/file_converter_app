@@ -261,16 +261,25 @@ class _HomeTab extends StatelessWidget {
   Widget _buildRemainingConversions(BuildContext context) {
     return BlocBuilder<ConversionBloc, ConversionState>(
       builder: (context, state) {
-        // Trigger check on first build
-        if (state is ConversionInitial) {
-          context.read<ConversionBloc>().add(
-                const RemainingConversionsChecked(),
-              );
+        // Trigger check on initial or when returning from conversion
+        if (state is ConversionInitial || state is ConversionSuccess) {
+          // Use addPostFrameCallback to avoid emitting during build
+          WidgetsBinding.instance.addPostFrameCallback((_) {
+            if (context.mounted) {
+              context.read<ConversionBloc>().add(
+                    const RemainingConversionsChecked(),
+                  );
+            }
+          });
         }
 
         int remaining = 5; // Default
         if (state is RemainingConversionsLoaded) {
           remaining = state.remaining;
+        } else if (state is ConversionTypeReady) {
+          remaining = state.remainingConversions;
+        } else if (state is ConversionReady) {
+          remaining = state.remainingConversions;
         }
 
         return Padding(
@@ -328,7 +337,12 @@ class _HomeTab extends StatelessWidget {
       MaterialPageRoute(
         builder: (_) => const ConversionPage(),
       ),
-    );
+    ).then((_) {
+      // Refresh remaining conversions when returning from conversion page
+      if (context.mounted) {
+        context.read<ConversionBloc>().add(const RemainingConversionsChecked());
+      }
+    });
   }
 
   void _navigateToPremium(BuildContext context) {

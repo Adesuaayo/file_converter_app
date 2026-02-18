@@ -42,15 +42,18 @@ class AppConstants {
   static const Duration mediumAnimation = Duration(milliseconds: 400);
   static const Duration longAnimation = Duration(milliseconds: 600);
 
-  // Ads
-  static const String admobAppIdAndroid = 'ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX';
-  static const String admobAppIdIos = 'ca-app-pub-XXXXXXXXXXXXXXXX~XXXXXXXXXX';
-  static const String bannerAdUnitIdAndroid = 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
-  static const String bannerAdUnitIdIos = 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
-  static const String interstitialAdUnitIdAndroid = 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
-  static const String interstitialAdUnitIdIos = 'ca-app-pub-XXXXXXXXXXXXXXXX/XXXXXXXXXX';
+  // Ads — Google's official test ad unit IDs (work on any device)
+  // Replace with your real AdMob IDs before publishing to production
+  static const String admobAppIdAndroid = 'ca-app-pub-3940256099942544~3347511713';
+  static const String admobAppIdIos = 'ca-app-pub-3940256099942544~1458002511';
+  static const String bannerAdUnitIdAndroid = 'ca-app-pub-3940256099942544/6300978111';
+  static const String bannerAdUnitIdIos = 'ca-app-pub-3940256099942544/2934735716';
+  static const String interstitialAdUnitIdAndroid = 'ca-app-pub-3940256099942544/1033173712';
+  static const String interstitialAdUnitIdIos = 'ca-app-pub-3940256099942544/4411468910';
 
-  // In-App Purchase Product IDs
+  // In-App Purchase Product IDs — Subscription tiers
   static const String premiumProductId = 'premium_upgrade';
-  static const String premiumSubscriptionId = 'premium_monthly';
+  static const String weeklySubscriptionId = 'premium_weekly';
+  static const String monthlySubscriptionId = 'premium_monthly';
+  static const String yearlySubscriptionId = 'premium_yearly';
 }
