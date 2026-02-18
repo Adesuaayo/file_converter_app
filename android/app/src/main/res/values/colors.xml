@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- App brand colors (matching AppColors in Dart) -->
+    <color name="ic_launcher_background">#2563EB</color>
+    <color name="splash_background">#2563EB</color>
+    <color name="splash_background_dark">#1D4ED8</color>
+</resources>

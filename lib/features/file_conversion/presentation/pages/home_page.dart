@@ -261,9 +261,13 @@ class _HomeTab extends StatelessWidget {
   Widget _buildRemainingConversions(BuildContext context) {
     return BlocBuilder<ConversionBloc, ConversionState>(
       builder: (context, state) {
-        // Trigger check on initial or when returning from conversion
-        if (state is ConversionInitial || state is ConversionSuccess) {
-          // Use addPostFrameCallback to avoid emitting during build
+        // Trigger check only on initial state.
+        // Do NOT trigger on ConversionSuccess — that would clobber the
+        // success state before the ConversionPage can display it, because
+        // ConversionBloc is a singleton shared across pages.
+        // The .then() callback on _navigateToConversion already handles
+        // refreshing after the user returns from the conversion page.
+        if (state is ConversionInitial) {
           WidgetsBinding.instance.addPostFrameCallback((_) {
             if (context.mounted) {
               context.read<ConversionBloc>().add(

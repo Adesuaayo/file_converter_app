@@ -37,20 +37,26 @@ class ConvertFileUseCase {
     // Perform the conversion
     final result = await _repository.convertFile(task);
 
-    // On success: save to history and increment counter
-    return result.fold(
-      (failure) => Left(failure),
-      (conversionResult) async {
-        // Save to history
-        await _repository.saveConversionResult(conversionResult);
+    // On success: save to history and increment counter.
+    // Note: avoid async callbacks inside dartz fold() — it creates
+    // type-inference issues (FutureOr<Either> vs Either). Instead,
+    // pattern-match explicitly.
+    if (result.isLeft()) {
+      return result;
+    }
 
-        // Increment daily counter (only for free users)
-        if (!isPremium) {
-          await _repository.incrementConversionCount();
-        }
-
-        return Right(conversionResult);
-      },
+    final conversionResult = result.getOrElse(
+      () => throw StateError('unreachable'),
     );
+
+    // Save to history
+    await _repository.saveConversionResult(conversionResult);
+
+    // Increment daily counter (only for free users)
+    if (!isPremium) {
+      await _repository.incrementConversionCount();
+    }
+
+    return Right(conversionResult);
   }
 }

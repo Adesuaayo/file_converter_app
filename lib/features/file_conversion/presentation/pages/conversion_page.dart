@@ -101,7 +101,26 @@ class ConversionPage extends StatelessWidget {
         state: state,
       );
     }
-    return const Center(child: CircularProgressIndicator());
+    // Safety net: if an unexpected state arrives (e.g. RemainingConversionsLoaded
+    // from the home page's BlocBuilder), show the generic "Convert" prompt
+    // rather than a stuck loading spinner.
+    return Center(
+      key: const ValueKey('idle'),
+      child: Column(
+        mainAxisAlignment: MainAxisAlignment.center,
+        children: [
+          Icon(Icons.swap_horiz_rounded, size: 64, color: Theme.of(context).colorScheme.primary.withOpacity(0.3)),
+          const SizedBox(height: 16),
+          Text(
+            'Select a file to convert',
+            style: TextStyle(
+              fontSize: 16,
+              color: Theme.of(context).colorScheme.onSurface.withOpacity(0.5),
+            ),
+          ),
+        ],
+      ),
+    );
   }
 }
 
