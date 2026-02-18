@@ -3,15 +3,16 @@
 # ──────────────────────────────────────────────────────────────────────────────
 #
 # Triggers:
-#   - Push to main branch
-#   - Pull requests to main
-#   - Manual dispatch (workflow_dispatch)
+#   - Push to main branch      → analyze + test + debug APK
+#   - Pull requests to main    → analyze + test
+#   - Tag push (v*)            → analyze + test + signed release APK + AAB + GitHub Release
+#   - Manual dispatch           → analyze + test + debug APK
 #
 # Jobs:
 #   1. analyze  — Static analysis + formatting check
 #   2. test     — Unit & widget tests
-#   3. build    — Build debug & release APK/AAB
-#   4. release  — Upload artifacts & create GitHub release (on tag push)
+#   3. build    — Build debug APK (on main push / dispatch)
+#   4. release  — Signed release APK + AAB + GitHub Release (on tag push)
 # ──────────────────────────────────────────────────────────────────────────────
 
 name: Flutter CI/CD
@@ -79,10 +80,13 @@ jobs:
           path: coverage/
           retention-days: 7
 
-  # ─── Build APK & AAB ──────────────────────────────────────────────────
+  # ─── Debug Build (main push & dispatch only) ───────────────────────────
   build:
-    name: Build Android
+    name: Build Debug APK
     runs-on: ubuntu-latest
+    if: >-
+      (github.event_name == 'push' && !startsWith(github.ref, 'refs/tags/'))
+      || github.event_name == 'workflow_dispatch'
     steps:
       - uses: actions/checkout@v4
 
@@ -100,18 +104,7 @@ jobs:
       - name: Install dependencies
         run: flutter pub get
 
-      # ── Decode signing key (for release builds) ──
-      - name: Decode keystore
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-        env:
-          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
-          KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
-        run: |
-          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/release.keystore
-          echo "$KEY_PROPERTIES" > android/key.properties
-
-      # ── Build Debug APK (split per ABI for smaller sizes) ──
-      - name: Build Debug APK
+      - name: Build Debug APK (split per ABI)
         run: flutter build apk --debug --split-per-abi
 
       - name: Upload Debug APKs
@@ -121,26 +114,58 @@ jobs:
           path: build/app/outputs/flutter-apk/app-*-debug.apk
           retention-days: 14
 
-      # ── Build Release APK (on tag push) ──
-      - name: Build Release APK
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
-        run: flutter build apk --release
+  # ─── Signed Release Build (tag push only) ──────────────────────────────
+  release-build:
+    name: Build Signed Release
+    runs-on: ubuntu-latest
+    if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+    steps:
+      - uses: actions/checkout@v4
 
-      - name: Upload Release APK
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
+      - uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: ${{ env.JAVA_VERSION }}
+
+      - uses: subosito/flutter-action@v2
+        with:
+          flutter-version: ${{ env.FLUTTER_VERSION }}
+          channel: stable
+          cache: true
+
+      - name: Install dependencies
+        run: flutter pub get
+
+      # ── Decode signing key ──
+      - name: Decode keystore
+        env:
+          KEYSTORE_BASE64: ${{ secrets.KEYSTORE_BASE64 }}
+          KEY_PROPERTIES: ${{ secrets.KEY_PROPERTIES }}
+        run: |
+          echo "$KEYSTORE_BASE64" | base64 --decode > android/app/release.keystore
+          echo "$KEY_PROPERTIES" > android/key.properties
+
+      # ── Extract version from tag ──
+      - name: Extract version from tag
+        id: version
+        run: echo "VERSION=${GITHUB_REF#refs/tags/v}" >> "$GITHUB_OUTPUT"
+
+      # ── Build Release APK ──
+      - name: Build Release APK
+        run: flutter build apk --release --split-per-abi
+
+      - name: Upload Release APKs
         uses: actions/upload-artifact@v4
         with:
           name: release-apk
-          path: build/app/outputs/flutter-apk/app-release.apk
+          path: build/app/outputs/flutter-apk/app-*-release.apk
           retention-days: 90
 
-      # ── Build AAB for Play Store (on tag push) ──
+      # ── Build AAB for Play Store ──
       - name: Build App Bundle (AAB)
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         run: flutter build appbundle --release
 
       - name: Upload AAB
-        if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
         uses: actions/upload-artifact@v4
         with:
           name: release-aab
@@ -151,14 +176,14 @@ jobs:
   release:
     name: Create Release
     runs-on: ubuntu-latest
-    needs: build
+    needs: release-build
     if: github.event_name == 'push' && startsWith(github.ref, 'refs/tags/v')
     permissions:
       contents: write
     steps:
       - uses: actions/checkout@v4
 
-      - name: Download Release APK
+      - name: Download Release APKs
         uses: actions/download-artifact@v4
         with:
           name: release-apk
@@ -175,5 +200,5 @@ jobs:
         with:
           generate_release_notes: true
           files: |
-            artifacts/app-release.apk
+            artifacts/*.apk
             artifacts/app-release.aab

@@ -57,3 +57,13 @@
 # Preserve line numbers for stack traces
 -keepattributes SourceFile,LineNumberTable
 -renamesourcefileattribute SourceFile
+
+# ─── PDF libraries (pdfx, pdf, printing) ──────────────────────────────────────
+-keep class io.scer.pdfx.** { *; }
+-dontwarn io.scer.pdfx.**
+
+# ─── Connectivity Plus ────────────────────────────────────────────────────────
+-dontwarn dev.fluttercommunity.plus.connectivity.**
+
+# ─── R8 full mode compatibility ──────────────────────────────────────────────
+-dontwarn java.lang.invoke.StringConcatFactory
