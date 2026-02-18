@@ -19,16 +19,38 @@ subprojects {
     project.evaluationDependsOn(":app")
 }
 
-// ── Force ALL sub-projects (including plugins like printing, pdfx, etc.)
-//    to use compileSdk 36 and disable fatal lint. Uses plugins.withId so it
-//    works even when the project is already evaluated.
+// ── Force compileSdk 36 + disable lint on every Android-library sub-project ──
+// evaluationDependsOn(":app") eagerly evaluates :app, so :app.state.executed
+// is already true when we reach here. For :app we configure directly (no-op
+// because it uses com.android.application, not library). For all other library
+// sub-projects we use afterEvaluate so our compileSdk override runs AFTER their
+// own build.gradle has finished (otherwise their `android{}` block would
+// overwrite our value).
 subprojects {
-    plugins.withId("com.android.library") {
-        val android = extensions.getByName("android") as com.android.build.gradle.LibraryExtension
-        android.compileSdk = 36
-        android.lint {
-            checkReleaseBuilds = false
-            abortOnError = false
+    if (project.state.executed) {
+        // :app lands here — it's already evaluated.
+        // Safe to configure directly; hasPlugin guard skips non-library projects.
+        if (project.plugins.hasPlugin("com.android.library")) {
+            val android = project.extensions.getByName("android")
+                    as com.android.build.gradle.LibraryExtension
+            android.compileSdk = 36
+            android.lint {
+                checkReleaseBuilds = false
+                abortOnError = false
+            }
+        }
+    } else {
+        // All plugin sub-projects (printing, pdfx, etc.) land here.
+        project.afterEvaluate {
+            if (plugins.hasPlugin("com.android.library")) {
+                val android = extensions.getByName("android")
+                        as com.android.build.gradle.LibraryExtension
+                android.compileSdk = 36
+                android.lint {
+                    checkReleaseBuilds = false
+                    abortOnError = false
+                }
+            }
         }
     }
 }
