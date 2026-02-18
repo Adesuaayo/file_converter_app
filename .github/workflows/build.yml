@@ -140,6 +140,11 @@ jobs:
       - name: Set Gradle JVM options
         run: echo "GRADLE_OPTS=-Xmx4g -XX:MaxMetaspaceSize=1g -XX:+UseParallelGC" >> $GITHUB_ENV
 
+      # ── Pre-install Android SDK 36 (required by plugins) ──
+      - name: Install Android SDK Platform 36
+        run: |
+          yes | $ANDROID_HOME/cmdline-tools/latest/bin/sdkmanager "platforms;android-36" || true
+
       # ── Decode signing key ──
       - name: Decode keystore
         env:
