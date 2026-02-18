@@ -16,7 +16,7 @@ if (keystorePropertiesFile.exists()) {
 
 android {
     namespace = "com.fileconverter.pro"
-    compileSdk = 35
+    compileSdk = 36
     ndkVersion = flutter.ndkVersion
 
     compileOptions {
@@ -26,6 +26,12 @@ android {
 
     kotlinOptions {
         jvmTarget = JavaVersion.VERSION_17.toString()
+    }
+
+    // Disable lint fatal checks — pdfx lint crashes with OOM on CI
+    lint {
+        checkReleaseBuilds = false
+        abortOnError = false
     }
 
     defaultConfig {
