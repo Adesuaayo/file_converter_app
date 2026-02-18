@@ -53,12 +53,11 @@
 
         <!-- ─── Google AdMob ──────────────────────────────────────────── -->
         <!--
-            IMPORTANT: Replace with your actual AdMob Application ID before release.
-            Test ID below is from Google's sample app for development only.
+            Production AdMob Application ID.
         -->
         <meta-data
             android:name="com.google.android.gms.ads.APPLICATION_ID"
-            android:value="ca-app-pub-3940256099942544~3347511713" />
+            android:value="ca-app-pub-6385497078275570~8227287724" />
 
         <!-- Optimize ad initialization -->
         <meta-data
